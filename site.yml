@@ -4,96 +4,102 @@
   become: true
   tags: [deploy]
   vars:
-    listen_port: 8080
     site_name: hello
+    listen_port: 8080
     web_root: "/var/www/{{ site_name }}"
-    nginx_conf: "/etc/nginx/sites-available/{{ site_name }}.conf"
-    nginx_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
-
+    nginx_site_file: "/etc/nginx/sites-available/{{ site_name }}.conf"
+    nginx_site_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
   tasks:
-    - name: Install nginx
+    - name: Ensure nginx installed (and apt cache updated)
       apt:
         name: nginx
         state: present
         update_cache: yes
 
-    - name: Make web root
+    - name: Create web root
       file:
         path: "{{ web_root }}"
         state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
 
-    - name: Put index.html (host-specific message)
-      copy:
+    - name: Deploy index.html with host-specific message
+      template:
+        src: templates/index.html.j2
         dest: "{{ web_root }}/index.html"
-        content: |
-          <!doctype html>
-          <html>
-            <head><meta charset="utf-8"><title>SJSU Demo</title></head>
-            <body style="font-family: system-ui; margin: 2rem;">
-              <h1>Hello World from SJSU-{{ site_id }}</h1>
-            </body>
-          </html>
+        owner: www-data
+        group: www-data
+        mode: '0644'
 
-    - name: Write nginx site config (port 8080)
-      copy:
-        dest: "{{ nginx_conf }}"
-        content: |
-          server {
-              listen {{ listen_port }};
-              server_name _;
-              root {{ web_root }};
-              index index.html;
-              location / { try_files $uri $uri/ =404; }
-          }
+    - name: Deploy nginx site config
+      template:
+        src: templates/hello.conf.j2
+        dest: "{{ nginx_site_file }}"
+        mode: '0644'
+      notify: reload nginx
 
-    - name: Enable site (symlink)
+    - name: Enable nginx site
       file:
-        src: "{{ nginx_conf }}"
-        dest: "{{ nginx_link }}"
+        src: "{{ nginx_site_file }}"
+        dest: "{{ nginx_site_link }}"
         state: link
-        force: true
+      notify: reload nginx
 
-    - name: (Optional) Open port 8080 on UFW if present
-      command: ufw allow {{ listen_port }}
-      register: ufw_out
-      failed_when: false  # do nothing if ufw is inactive/not installed
+    - name: Test nginx config
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
 
-    - name: Start/enable nginx (simple restart to apply changes)
+    - name: Ensure nginx is running and enabled
       service:
         name: nginx
-        state: restarted
+        state: started
         enabled: true
+        
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
 
-
-# UNDEPLO
+# UNDEPLOY
 - name: Un-deploy webservers
   hosts: web
   become: true
   tags: [undeploy]
   vars:
     site_name: hello
+    listen_port: 8080
     web_root: "/var/www/{{ site_name }}"
-    nginx_conf: "/etc/nginx/sites-available/{{ site_name }}.conf"
-    nginx_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
-
+    nginx_site_file: "/etc/nginx/sites-available/{{ site_name }}.conf"
+    nginx_site_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
   tasks:
-    - name: Disable site (remove symlink)
+    - name: Disable nginx site
       file:
-        path: "{{ nginx_link }}"
+        path: "{{ nginx_site_link }}"
         state: absent
+      notify: reload nginx
 
     - name: Remove site config
       file:
-        path: "{{ nginx_conf }}"
+        path: "{{ nginx_site_file }}"
         state: absent
+      notify: reload nginx
 
-    - name: Remove web files
+    - name: Remove web content directory
       file:
         path: "{{ web_root }}"
         state: absent
 
-    - name: Stop/disable nginx
+    - name: Stop and disable nginx
       service:
         name: nginx
         state: stopped
         enabled: false
+
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
