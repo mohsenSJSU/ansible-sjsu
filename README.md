@@ -22,5 +22,5 @@ Ansible playbook deploys Nginx on two Ubuntu VMs and serves (using terminal only
   -  hello.conf.j2
   -  index.html.j2
 -  host_vars/
-  ─ vm1.yml
-  ─ vm2.ym
+  -  vm1.yml
+  -  vm2.yml
