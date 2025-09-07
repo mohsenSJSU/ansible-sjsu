@@ -14,16 +14,22 @@ Ansible playbook deploys Nginx on two Ubuntu VMs and serves (using terminal only
 - Listen port: 8080. Includes deploy and un-deploy plays.
 
 # Files used
-- ansible-sjsu/
--  ansible.cfg
--  inventory.ini
--  site.yml
--  templates/
-  -  hello.conf.j2
-  -  index.html.j2
--  host_vars/
-  -  vm1.yml
-  -  vm2.yml
+- ansible-sjsu/ → Ansible H/W Directory
+  
+-  ansible.cfg  → Ansible’s project configuration file. It’s a simple INI-style file kept in the repo’s root to set default behavior for all ansible and ansible-playbook commands you run from that folder
+  
+-  inventory.ini → An Ansible inventory file (INI format) that tells Ansible which machines to manage and how to connect to them
+  
+-  site.yml  → The main Ansible playbook. It defines the steps to deploy and un-deploy a tiny Nginx website on all hosts in the web group
+  
+-  templates/ → A folder holding Jinja2 templates that Ansible will take and produce a final plain-text file by filling in the variables
+  
+  -  hello.conf.j2 → Nginx site config template
+  -  index.html.j2 → HTML page template
+    
+-  host_vars/ → Folder where YAML files are kept. Ansible loads these and applies these for the host. 
+  -  vm1.yml 
+  -  vm2.yml 
 
 # Method
 To complete this assignment, 
