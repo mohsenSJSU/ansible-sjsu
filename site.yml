@@ -4,112 +4,96 @@
   become: true
   tags: [deploy]
   vars:
-    site_name: hello
     listen_port: 8080
+    site_name: hello
     web_root: "/var/www/{{ site_name }}"
-    nginx_site_file: "/etc/nginx/sites-available/{{ site_name }}.conf"
-    nginx_site_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
+    nginx_conf: "/etc/nginx/sites-available/{{ site_name }}.conf"
+    nginx_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
+
   tasks:
-    - name: Ensure nginx installed (and apt cache updated)
+    - name: Install nginx
       apt:
         name: nginx
         state: present
         update_cache: yes
 
-    - name: Create web root
+    - name: Make web root
       file:
         path: "{{ web_root }}"
         state: directory
-        owner: www-data
-        group: www-data
-        mode: '0755'
 
-    - name: Deploy index.html with host-specific message
-      template:
-        src: templates/index.html.j2
+    - name: Put index.html (host-specific message)
+      copy:
         dest: "{{ web_root }}/index.html"
-        owner: www-data
-        group: www-data
-        mode: '0644'
+        content: |
+          <!doctype html>
+          <html>
+            <head><meta charset="utf-8"><title>SJSU Demo</title></head>
+            <body style="font-family: system-ui; margin: 2rem;">
+              <h1>Hello World from SJSU-{{ site_id }}</h1>
+            </body>
+          </html>
 
-    - name: Deploy nginx site config
-      template:
-        src: templates/hello.conf.j2
-        dest: "{{ nginx_site_file }}"
-        mode: '0644'
-      notify: reload nginx
+    - name: Write nginx site config (port 8080)
+      copy:
+        dest: "{{ nginx_conf }}"
+        content: |
+          server {
+              listen {{ listen_port }};
+              server_name _;
+              root {{ web_root }};
+              index index.html;
+              location / { try_files $uri $uri/ =404; }
+          }
 
-    - name: Enable nginx site
+    - name: Enable site (symlink)
       file:
-        src: "{{ nginx_site_file }}"
-        dest: "{{ nginx_site_link }}"
+        src: "{{ nginx_conf }}"
+        dest: "{{ nginx_link }}"
         state: link
-      notify: reload nginx
+        force: true
 
-    - name: Test nginx config
-      command: nginx -t
-      register: nginx_test
-      changed_when: false
+    - name: (Optional) Open port 8080 on UFW if present
+      command: ufw allow {{ listen_port }}
+      register: ufw_out
+      failed_when: false  # do nothing if ufw is inactive/not installed
 
-    - name: Ensure nginx is running and enabled
+    - name: Start/enable nginx (simple restart to apply changes)
       service:
         name: nginx
-        state: started
+        state: restarted
         enabled: true
 
-    - name: Check UFW status (firewall)
-      command: ufw status
-      register: ufw_status
-      changed_when: false
-      failed_when: false
 
-    - name: Allow 8080 through UFW if active
-      command: ufw allow {{ listen_port }}
-      when: "'Status: active' in ufw_status.stdout"
-
-  handlers:
-    - name: reload nginx
-      service:
-        name: nginx
-        state: reloaded
-
-# UNDEPLOY
+# UNDEPLO
 - name: Un-deploy webservers
   hosts: web
   become: true
   tags: [undeploy]
   vars:
     site_name: hello
-    listen_port: 8080
     web_root: "/var/www/{{ site_name }}"
-    nginx_site_file: "/etc/nginx/sites-available/{{ site_name }}.conf"
-    nginx_site_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
+    nginx_conf: "/etc/nginx/sites-available/{{ site_name }}.conf"
+    nginx_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
+
   tasks:
-    - name: Disable nginx site
+    - name: Disable site (remove symlink)
       file:
-        path: "{{ nginx_site_link }}"
+        path: "{{ nginx_link }}"
         state: absent
-      notify: reload nginx
 
     - name: Remove site config
       file:
-        path: "{{ nginx_site_file }}"
+        path: "{{ nginx_conf }}"
         state: absent
-      notify: reload nginx
 
-    - name: Remove web content directory
+    - name: Remove web files
       file:
         path: "{{ web_root }}"
         state: absent
 
-    - name: Stop and disable nginx
+    - name: Stop/disable nginx
       service:
         name: nginx
         state: stopped
         enabled: false
-
-  handlers:
-    - name: reload nginx
-      service:
-        name: nginx
-        state: reloaded
