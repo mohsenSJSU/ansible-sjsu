@@ -18,7 +18,7 @@ Ansible playbook deploys Nginx on two Ubuntu VMs and serves (using terminal only
   
 -  ansible.cfg  → Ansible’s project configuration file. It’s a simple INI-style file kept in the repo’s root to set default behavior for all ansible and ansible-playbook commands you run from that folder
   
--  inventory.ini → An Ansible inventory file (INI format) that tells Ansible which machines to manage and how to connect to them
+-  hosts.ini → An Ansible inventory file (INI format) that tells Ansible which machines to manage and how to connect to them
   
 -  site.yml  → The main Ansible playbook. It defines the steps to deploy and un-deploy a tiny Nginx website on all hosts in the web group
   
