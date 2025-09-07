@@ -14,13 +14,13 @@ Ansible playbook deploys Nginx on two Ubuntu VMs and serves (using terminal only
 - Listen port: 8080. Includes deploy and un-deploy plays.
 
 # Files used
-ansible-sjsu/
-─ ansible.cfg
-─ inventory.ini
-─ site.yml
-─ templates/
-  ─ hello.conf.j2
-  ─ index.html.j2
-─ host_vars/
+- ansible-sjsu/
+-  ansible.cfg
+-  inventory.ini
+-  site.yml
+-  templates/
+  -  hello.conf.j2
+  -  index.html.j2
+-  host_vars/
   ─ vm1.yml
   ─ vm2.ym
