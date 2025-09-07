@@ -11,7 +11,7 @@ Submit a Word document, with screenshots showing your work, and a demo, and all 
 Ansible playbook deploys Nginx on two Ubuntu VMs and serves (using terminal only):
 - VM1(192.168.64.10) → “Hello World from SJSU-1”
 - VM2(192.168.64.11) → “Hello World from SJSU-2”
-Listen port: 8080. Includes deploy and un-deploy plays.
+- Listen port: 8080. Includes deploy and un-deploy plays.
 
 # Files used
 ansible-sjsu/
