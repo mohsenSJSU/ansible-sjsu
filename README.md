@@ -5,7 +5,7 @@ Include in the Ansible playbook, plays to deploy and un-deploy the webserver res
 
 Submit a Word document, with screenshots showing your work, and a demo, and all ansible code/scripts via github
 
-# MohsenMinai019133075 SJSU Enterprise Software Platforms Ansible HW — Two VMs,using  Nginx on port 8080
+# MohsenMinai - 019133075 - SJSU - Enterprise Software Platforms - Ansible HW — Two VMs,using Nginx on port 8080
 
 # Overview
 Ansible playbook deploys Nginx on two Ubuntu VMs and serves (using terminal only):
