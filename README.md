@@ -15,12 +15,12 @@ Ansible playbook deploys Nginx on two Ubuntu VMs and serves (using terminal only
 
 # Files used
 ansible-sjsu/
-├─ ansible.cfg
-├─ inventory.ini
-├─ site.yml
-├─ templates/
-│  ├─ hello.conf.j2
-│  └─ index.html.j2
-└─ host_vars/
-   ├─ vm1.yml
-   └─ vm2.ym
+─ ansible.cfg
+─ inventory.ini
+─ site.yml
+─ templates/
+  ─ hello.conf.j2
+  ─ index.html.j2
+─ host_vars/
+  ─ vm1.yml
+  ─ vm2.ym
