@@ -24,3 +24,6 @@ Ansible playbook deploys Nginx on two Ubuntu VMs and serves (using terminal only
 -  host_vars/
   -  vm1.yml
   -  vm2.yml
+
+# Method
+To complete this assignment, create two Ubuntu VMs (I used Multipass) and confirm you can SSH into them with your key (create key if needed). Install Ansible (brew install ansible), clone this repo, and update hosts.ini with the IPs of vm1 and vm2 plus ansible_user=ubuntu and your key path. Verify connectivity with ansible -i hosts.ini web -m ping, then deploy with ansible-playbook -i hosts.ini site.yml --tags deploy. This installs Nginx, renders the templates, and serves the pages on port 8080; check in a browser at http://<vm-ip>:8080 (or curl). To undeploy, run ansible-playbook -i hosts.ini site.yml --tags undeploy.
