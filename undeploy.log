@@ -1,0 +1,33 @@
+
+PLAY [Deploy webservers on port 8080] ******************************************
+
+PLAY [Un-deploy webservers] ****************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [vm2]
+ok: [vm1]
+
+TASK [Disable nginx site] ******************************************************
+changed: [vm2]
+changed: [vm1]
+
+TASK [Remove site config] ******************************************************
+changed: [vm2]
+changed: [vm1]
+
+TASK [Remove web content directory] ********************************************
+changed: [vm1]
+changed: [vm2]
+
+TASK [Stop and disable nginx] **************************************************
+changed: [vm2]
+changed: [vm1]
+
+RUNNING HANDLER [reload nginx] *************************************************
+changed: [vm1]
+changed: [vm2]
+
+PLAY RECAP *********************************************************************
+vm1                        : ok=6    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+vm2                        : ok=6    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

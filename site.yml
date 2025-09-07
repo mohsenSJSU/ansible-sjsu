@@ -1,0 +1,115 @@
+# DEPLOY
+- name: Deploy webservers on port 8080
+  hosts: web
+  become: true
+  tags: [deploy]
+  vars:
+    site_name: hello
+    listen_port: 8080
+    web_root: "/var/www/{{ site_name }}"
+    nginx_site_file: "/etc/nginx/sites-available/{{ site_name }}.conf"
+    nginx_site_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
+  tasks:
+    - name: Ensure nginx installed (and apt cache updated)
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Create web root
+      file:
+        path: "{{ web_root }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Deploy index.html with host-specific message
+      template:
+        src: templates/index.html.j2
+        dest: "{{ web_root }}/index.html"
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Deploy nginx site config
+      template:
+        src: templates/hello.conf.j2
+        dest: "{{ nginx_site_file }}"
+        mode: '0644'
+      notify: reload nginx
+
+    - name: Enable nginx site
+      file:
+        src: "{{ nginx_site_file }}"
+        dest: "{{ nginx_site_link }}"
+        state: link
+      notify: reload nginx
+
+    - name: Test nginx config
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+
+    - name: Ensure nginx is running and enabled
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Check UFW status (firewall)
+      command: ufw status
+      register: ufw_status
+      changed_when: false
+      failed_when: false
+
+    - name: Allow 8080 through UFW if active
+      command: ufw allow {{ listen_port }}
+      when: "'Status: active' in ufw_status.stdout"
+
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
+
+# UNDEPLOY
+- name: Un-deploy webservers
+  hosts: web
+  become: true
+  tags: [undeploy]
+  vars:
+    site_name: hello
+    listen_port: 8080
+    web_root: "/var/www/{{ site_name }}"
+    nginx_site_file: "/etc/nginx/sites-available/{{ site_name }}.conf"
+    nginx_site_link: "/etc/nginx/sites-enabled/{{ site_name }}.conf"
+  tasks:
+    - name: Disable nginx site
+      file:
+        path: "{{ nginx_site_link }}"
+        state: absent
+      notify: reload nginx
+
+    - name: Remove site config
+      file:
+        path: "{{ nginx_site_file }}"
+        state: absent
+      notify: reload nginx
+
+    - name: Remove web content directory
+      file:
+        path: "{{ web_root }}"
+        state: absent
+
+    - name: Stop and disable nginx
+      service:
+        name: nginx
+        state: stopped
+        enabled: false
+
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
